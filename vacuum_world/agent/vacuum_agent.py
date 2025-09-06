@@ -1,6 +1,7 @@
 """
 Intelligent vacuum agent that uses search algorithms to clean dirt.
 """
+
 import time
 from typing import List, Optional
 from enum import Enum
@@ -34,27 +35,28 @@ class IntelligentVacuumAgent:
         self.current_path: List[SearchNode] = []
         self.current_path_index = 0
         self.max_depth = 1000000
-    
+
     def set_search_method(self, method: SearchMethod):
         self.search_method = method
-    
+
     def step(self, real_world: World):
         if real_world.is_terminated():
             return
-        
+
         action = self.choose_action()
         self.act(action, real_world)
-    
+
     def choose_action(self) -> Action:
         """
         Choose the next action to take (without executing it)
         """
 
         # Are we at the dirt's location?
-        if (self.target is not None and 
-            self.world.agent and 
-            self.world.agent.at_position(self.target)):
-            
+        if (
+            self.target is not None
+            and self.world.agent
+            and self.world.agent.at_position(self.target)
+        ):
             dirt = self.world.get_dirt_at_position(self.target)
             if dirt is None:
                 # Dirt was already removed
@@ -64,22 +66,22 @@ class IntelligentVacuumAgent:
                 # Suck dirt
                 self.target = None
                 return Action.SUCK_DIRT
-        
+
         # Do we need to select a new target dirt?
         target = self.select_target(self.target)
         if target is None:
             agent_print("No more dirt, the maze is shining clean!")
             return Action.NO_OPERATION
         elif target != self.target:
-                self.target = target
-                self.reset_plan()
-        
+            self.target = target
+            self.reset_plan()
+
         # Do we need to plan a path?
         if not self.current_path:
             path = self.plan_to_target(self.target, self.world)
             self.current_path = path
             self.current_path_index = 0
-        
+
         # If we still have no path, then path planning failed (check if the target was unreachable?)
         if not self.current_path:
             agent_print("No path found!")
@@ -88,10 +90,10 @@ class IntelligentVacuumAgent:
             # Follow the plan
             action = self.step_to_target(self.current_path, self.world)
             return action
-    
+
     def act(self, action: Action, world: World):
         """Execute an action in the world.
-        
+
         Args:
             action: The action to execute
             world: The world to act in
@@ -111,67 +113,67 @@ class IntelligentVacuumAgent:
             agent_print("NO-OP Action")
         else:
             agent_print(f"Unknown Action: {action}")
-    
+
     def select_target(self, last_target: Optional[GridPos]) -> Optional[GridPos]:
         """Select the closest dirt particle as target.
-        
+
         Args:
             last_target: The previous target (None to select new)
-            
+
         Returns:
             Selected target or None if no dirt available
         """
         uncleaned_dirt = self.world.get_all_uncleaned_dirt()
-        
+
         if len(uncleaned_dirt) == 0:
             return None
-        
+
         if last_target is None:
             if not self.world.agent:
                 return uncleaned_dirt[0]
-            
+
             agent_pos = GridPos(self.world.agent.x, self.world.agent.y)
-            best_dist = float('inf')
+            best_dist = float("inf")
             target = None
-            
+
             for dirt in uncleaned_dirt:
                 dist = agent_pos.distance_euclidean(dirt)
                 if dist < best_dist:
                     best_dist = dist
                     target = dirt
-            
+
             return target
         else:
             return last_target
-    
+
     def step_to_target(self, path: List[SearchNode], world: World) -> Action:
         """Make one step towards the target following the path.
-        
+
         Args:
             path: The path to follow
             world: The world to move in
-            
+
         Returns:
             The action to take
         """
         if not path:
             agent_print("NO PATH FOUND!")
             return Action.NO_OPERATION
-        
+
         if self.current_path_index >= len(path):
             return Action.NO_OPERATION
-        
+
         node = path[self.current_path_index]
         self.current_path_index += 1
-        
+
         next_pos = node.get_state()
-        
+
         if not world.agent:
             return Action.NO_OPERATION
-        
+
         dx = next_pos.x - world.agent.x
         dy = next_pos.y - world.agent.y
-        
+
         # Determine action based on direction
         if dx > 0:
             return Action.GO_EAST
@@ -183,72 +185,75 @@ class IntelligentVacuumAgent:
             return Action.GO_SOUTH
         else:
             return Action.NO_OPERATION
-    
+
     def plan_to_target(self, dest: GridPos, world: World) -> List[SearchNode]:
         """Plan a path to the target using the selected search method.
-        
+
         Args:
             dest: The destination position
             world: The world to plan in
-            
+
         Returns:
             List of SearchNode objects representing the path
         """
         if not world.agent:
             return []
-        
+
         start = GridPos(world.agent.x, world.agent.y)
         goal = dest
-        
+
         if start is None or goal is None:
             return []
-        
+
         agent_print(f"planning from {start} to {goal}")
-        
+
         search_result = self.search_plan(world, start, goal, self.search_method, True)
-        
+
         if search_result:
             path = search_result.get_path()
-            
+
             # Update path graphics in world
             if path:
                 path_positions = [node.get_state() for node in path]
                 world.mark_current_path(path_positions)
-            
+
             # Update explored state graphics in world
-            expanded_positions = [node.get_state() for node in search_result.get_all_expanded_nodes()]
+            expanded_positions = [
+                node.get_state() for node in search_result.get_all_expanded_nodes()
+            ]
             world.mark_expanded_nodes(expanded_positions)
-            
+
             return path
-        
+
         return []
-    
+
     def reset_plan(self):
         self.current_path = []
         self.current_path_index = 0
-    
-    def search_plan(self, 
-                   world: World, 
-                   start: GridPos, 
-                   goal: GridPos, 
-                   method: SearchMethod, 
-                   print_result: bool = True):
+
+    def search_plan(
+        self,
+        world: World,
+        start: GridPos,
+        goal: GridPos,
+        method: SearchMethod,
+        print_result: bool = True,
+    ):
         """Search for a plan using the specified method.
-        
+
         Args:
             world: The world to search in
             start: The start position
             goal: The goal position
             method: The search method to use
             print_result: Whether to print timing results
-            
+
         Returns:
             The search object with results, or None if failed
         """
         start_time = time.time()
         problem = SearchProblem(world, start, goal)
-        
-        
+
         if method == SearchMethod.RANDOM_SEARCH:
             if print_result:
                 agent_print("starting Random Search")
@@ -268,15 +273,17 @@ class IntelligentVacuumAgent:
         else:
             agent_print(f"Unknown search method: {method}")
             return None
-        
+
         problem.reset_expanded_count()
         path = search_run.search(problem)
-        
+
         end_time = time.time()
         elapsed_time = (end_time - start_time) * 1000
-        
+
         if print_result:
-            print(f"\tNeeded {elapsed_time:.1f} msec, PathLength: {len(path)}, "
-                  f"NumExpNodes: {problem.get_num_expanded_nodes()}")
-        
+            print(
+                f"\tNeeded {elapsed_time:.1f} msec, PathLength: {len(path)}, "
+                f"NumExpNodes: {problem.get_num_expanded_nodes()}"
+            )
+
         return search_run

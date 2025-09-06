@@ -2,6 +2,7 @@
 """
 Convenience script to run the vacuum world lab.
 """
+
 import sys
 import os
 
@@ -11,4 +12,5 @@ sys.path.insert(0, os.path.dirname(__file__))
 # Import and run the main function
 if __name__ == "__main__":
     from vacuum_world.main import main
+
     main()

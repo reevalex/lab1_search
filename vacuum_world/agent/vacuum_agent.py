@@ -78,9 +78,10 @@ class IntelligentVacuumAgent:
 
         # Do we need to plan a path?
         if not self.current_path:
-            path = self.plan_to_target(self.target, self.world)
-            self.current_path = path
-            self.current_path_index = 0
+            if self.target is not None:
+                path = self.plan_to_target(self.target, self.world)
+                self.current_path = path
+                self.current_path_index = 0
 
         # If we still have no path, then path planning failed (check if the target was unreachable?)
         if not self.current_path:

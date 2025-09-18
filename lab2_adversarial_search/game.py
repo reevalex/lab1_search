@@ -25,7 +25,9 @@ class State:
     @property
     def score(self) -> int:
         # TODO: Complete this method
-        return 0
+        # Testing this for now, but might need a change later // Simon
+        return self.pits[PLAYER_0_STORE] - self.pits[PLAYER_1_STORE]
+
 
     def next_state(self, pit):
         """

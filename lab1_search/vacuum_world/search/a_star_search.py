@@ -1,7 +1,7 @@
 from typing import List, Optional
-from vacuum_world.search.search_node import SearchNode
-from vacuum_world.search.problem import SearchProblem
-from vacuum_world.world.grid_pos import GridPos
+from lab1_search.vacuum_world.search.search_node import SearchNode
+from lab1_search.vacuum_world.search.problem import SearchProblem
+from lab1_search.vacuum_world.world.grid_pos import GridPos
 from .base_search import BaseSearch
 
 import heapq

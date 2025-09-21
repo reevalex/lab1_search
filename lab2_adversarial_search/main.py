@@ -14,7 +14,8 @@ def main():
 
     game = Game()
     # Set the AI for player 0 and player 1, respectively
-    game.set_ai_players(Random, AlphaBeta)
+    # game.set_ai_players(Random, AlphaBeta)
+    game.set_ai_players(MinMax, MinMax)
     game.initialize()
 
     game.run()

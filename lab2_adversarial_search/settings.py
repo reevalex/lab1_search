@@ -1,8 +1,8 @@
 from utils import Position
 
 # Game setups
-SEEDS = 4
-PITS_PER_PLAYER = 6  # PLAYABLE pits per player
+SEEDS = 3
+PITS_PER_PLAYER = 3  # PLAYABLE pits per player
 
 # AI setup
 AI_WAIT_TIME = 200  # in ms. Minimum time that the AI waits before playing the move it computed

@@ -24,7 +24,9 @@ class State:
 
     @property
     def score(self) -> int:
-        return self.pits[PLAYER_0_STORE] - self.pits[PLAYER_1_STORE]
+
+        return self.pits[PLAYER_0_STORE] - self.pits[PLAYER_1_STORE] # For 3.2
+        # return 1  # For 3.1
 
 
     def next_state(self, pit):

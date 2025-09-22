@@ -19,18 +19,21 @@ class MinMax(AI):
     expanded = 0
     @staticmethod
     def best_move(current_state: State, objective: Objective):
+        depth = 0
         MinMax.expanded = 0
 
         if objective == Objective.MAX:
-            _, move = MinMax.max_value(current_state)
+            _, move = MinMax.max_value(current_state, depth)
         else:
-            _, move = MinMax.min_value(current_state)
+            _, move = MinMax.min_value(current_state, depth)
 
         print(f"Expanded states: {MinMax.expanded}")
 
         return move
     @staticmethod
-    def max_value(current_state: State):
+    def max_value(current_state: State, depth:int):
+        if depth == 8:
+            return current_state.score,None
         MinMax.expanded += 1
 
         if current_state.check_victory() is not None:
@@ -45,9 +48,9 @@ class MinMax(AI):
         for m in moves:
             child = current_state.next_state(m)
             if child.current_player == 0:
-                child_value,_ = MinMax.max_value(child)
+                child_value,_ = MinMax.max_value(child, depth + 1)
             else:
-                child_value,_ = MinMax.min_value(child)
+                child_value,_ = MinMax.min_value(child, depth + 1)
 
             if child_value > v:
                 v = child_value
@@ -56,7 +59,10 @@ class MinMax(AI):
         return v, best_move
 
     @staticmethod
-    def min_value(current_state: State):
+    def min_value(current_state: State, depth:int):
+        if depth == 8:
+            return current_state.score, None
+
         MinMax.expanded += 1
         if current_state.check_victory() is not None:
             return current_state.score, None
@@ -71,9 +77,9 @@ class MinMax(AI):
             child = current_state.next_state(m)
 
             if child.current_player == 1:
-                child_value, _ = MinMax.min_value(child)
+                child_value, _ = MinMax.min_value(child, depth + 1)
             else:
-                child_value, _ = MinMax.max_value(child)
+                child_value, _ = MinMax.max_value(child, depth + 1)
 
             if child_value < v:
                 v = child_value

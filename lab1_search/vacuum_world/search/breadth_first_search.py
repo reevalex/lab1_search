@@ -1,6 +1,6 @@
 from typing import List
-from vacuum_world.search.search_node import SearchNode
-from vacuum_world.search.problem import SearchProblem
+from lab1_search.vacuum_world.search.search_node import SearchNode
+from lab1_search.vacuum_world.search.problem import SearchProblem
 from .base_search import BaseSearch
 from collections import deque
 

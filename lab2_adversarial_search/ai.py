@@ -88,6 +88,77 @@ class MinMax(AI):
         return v, best_move
 
 class AlphaBeta(AI):
+    expanded = 0
+    pruned = 0
+    depth = 0
     @staticmethod
     def best_move(current_state: State, objective: Objective):
-        pass
+        AlphaBeta.expanded = 0
+        AlphaBeta.pruned = 0
+
+        if objective == Objective.MAX:
+            _, move = AlphaBeta.max_value(current_state, float("-inf"), float("inf"), AlphaBeta.depth )
+        else:
+            _, move = AlphaBeta.min_value(current_state, float("-inf"), float("inf"), AlphaBeta.depth)
+
+        print(f"Expanded states AlphaBeta: {AlphaBeta.expanded}")
+        print(f"Pruned branches: {AlphaBeta.pruned}")
+
+        return move
+
+    @staticmethod
+    def max_value(current_state: State, alpha, beta, depth):
+        if depth == 8:
+            return current_state.score,None
+        AlphaBeta.expanded += 1
+        if current_state.check_victory() is not None:
+            return current_state.score, None
+
+        moves = current_state.available_moves()
+        if not moves:
+            return current_state.score, None
+
+        v = float("-inf")
+        best_move = moves[0]
+        for i,m in enumerate(moves):
+            child = current_state.next_state(m)
+
+            v2, _ = AlphaBeta.min_value(child, alpha, beta, depth + 1)
+            if v2 > v:
+                v = v2
+                best_move = m
+                alpha = max(alpha, v)
+            if v >= beta:
+                AlphaBeta.pruned += len(moves) - i - 1
+                return v, best_move
+
+        return v, best_move
+
+    @staticmethod
+    def min_value(current_state: State, alpha, beta, depth):
+
+        if depth == 8:
+            return current_state.score,None
+
+        AlphaBeta.expanded += 1
+        if current_state.check_victory() is not None:
+            return current_state.score, None
+
+        moves = current_state.available_moves()
+        if not moves:
+            return current_state.score, None
+
+        v = float("inf")
+        best_move = moves[0]
+        for i,m in enumerate(moves):
+            child = current_state.next_state(m)
+
+            v2, _ = AlphaBeta.max_value(child, alpha, beta, depth + 1)
+            if v2 < v:
+                v = v2
+                best_move = m
+                beta = min(beta, v)
+            if v <= alpha:
+                AlphaBeta.pruned += len(moves) - i - 1
+                return v, best_move
+        return v, best_move

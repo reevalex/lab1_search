@@ -1,0 +1,10 @@
+[project]
+name = "lab2-adversarial-search"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pygame>=2.6.1",
+    "rich>=14.1.0",
+]

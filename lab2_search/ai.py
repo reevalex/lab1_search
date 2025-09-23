@@ -1,8 +1,6 @@
 import random
 
 from game import AI, State, Objective
-from typing import Union
-from settings import MAX_DEPTH
 
 
 class Random(AI):
@@ -18,194 +16,149 @@ class Random(AI):
 
 
 class MinMax(AI):
-    expanded_nodes = 0
-
+    expanded = 0
     @staticmethod
     def best_move(current_state: State, objective: Objective):
-        state = current_state.copy()
+        depth = 0
+        MinMax.expanded = 0
 
-        MinMax.expanded_nodes = 0
-
-        available_moves = state.available_moves()
-        if not available_moves:
-            return None
-
-        next_move = None
-        best_value = float("-inf") if objective == Objective.MAX else float("inf")
-
-        for move in available_moves:
-            next_state = state.next_state(move)
-
-            if objective == Objective.MAX:
-                value = MinMax.min_value(next_state, MAX_DEPTH)
-                if value > best_value:
-                    best_value = value
-                    next_move = move
-            elif objective == Objective.MIN:
-                value = MinMax.max_value(next_state, MAX_DEPTH)
-                if value < best_value:
-                    best_value = value
-                    next_move = move
-
-        if MAX_DEPTH is None:
-            print(f"[MinMax - Unbounded] Expanded {MinMax.expanded_nodes} nodes")
+        if objective == Objective.MAX:
+            _, move = MinMax.max_value(current_state, depth)
         else:
-            print(
-                f"[MinMax - Bounded={MAX_DEPTH}] Expanded {MinMax.expanded_nodes} nodes"
-            )
-        return next_move
+            _, move = MinMax.min_value(current_state, depth)
+
+        print(f"Expanded states: {MinMax.expanded}")
+
+        return move
+    @staticmethod
+    def max_value(current_state: State, depth:int):
+        if depth == 8:
+            return current_state.score,None
+        MinMax.expanded += 1
+
+        if current_state.check_victory() is not None:
+            return current_state.score, None
+
+        moves = current_state.available_moves()
+        if not moves:
+            return current_state.score, None
+
+        v = float("-inf")
+        best_move = moves[0]
+        for m in moves:
+            child = current_state.next_state(m)
+            if child.current_player == 0:
+                child_value,_ = MinMax.max_value(child, depth + 1)
+            else:
+                child_value,_ = MinMax.min_value(child, depth + 1)
+
+            if child_value > v:
+                v = child_value
+                best_move = m
+
+        return v, best_move
 
     @staticmethod
-    def max_value(current_state: State, max_depth: Union[int, None]):
-        MinMax.expanded_nodes += 1
-        state = current_state.copy()
+    def min_value(current_state: State, depth:int):
+        if depth == 8:
+            return current_state.score, None
 
-        if state.check_victory() is not None:
-            return state.score
+        MinMax.expanded += 1
+        if current_state.check_victory() is not None:
+            return current_state.score, None
 
-        if max_depth == 0 and max_depth is not None:
-            return state.score
-        max_depth = max_depth - 1 if max_depth is not None else max_depth
+        moves = current_state.available_moves()
+        if not moves:
+            return current_state.score, None
 
-        available_moves = state.available_moves()
-        if not available_moves:
-            return state.score
+        v = float("inf")
+        best_move = moves[0]
+        for m in moves:
+            child = current_state.next_state(m)
 
-        max_value = float("-inf")
-        for move in available_moves:
-            next_state = state.next_state(move)
-            value = MinMax.min_value(next_state, max_depth)
-            max_value = max(max_value, value)
-        return max_value
+            if child.current_player == 1:
+                child_value, _ = MinMax.min_value(child, depth + 1)
+            else:
+                child_value, _ = MinMax.max_value(child, depth + 1)
 
-    @staticmethod
-    def min_value(current_state: State, max_depth: Union[int, None]):
-        MinMax.expanded_nodes += 1
-        state = current_state.copy()
+            if child_value < v:
+                v = child_value
+                best_move = m
 
-        if state.check_victory() is not None:
-            return state.score
-
-        if max_depth == 0 and max_depth is not None:
-            return state.score
-        max_depth = max_depth - 1 if max_depth is not None else max_depth
-
-        available_moves = state.available_moves()
-        if not available_moves:
-            return state.score
-
-        min_value = float("inf")
-        for move in available_moves:
-            next_state = state.next_state(move)
-            value = MinMax.max_value(next_state, max_depth)
-            min_value = min(min_value, value)
-        return min_value
-
+        return v, best_move
 
 class AlphaBeta(AI):
-    expanded_nodes = 0
-    pruned_nodes = 0
-
+    expanded = 0
+    pruned = 0
+    depth = 0
     @staticmethod
     def best_move(current_state: State, objective: Objective):
-        state = current_state.copy()
+        AlphaBeta.expanded = 0
+        AlphaBeta.pruned = 0
 
-        AlphaBeta.expanded_nodes = 0
-        AlphaBeta.pruned_nodes = 0
-
-        available_moves = state.available_moves()
-        if not available_moves:
-            return None
-
-        next_move = None
-        best_value = float("-inf") if objective == Objective.MAX else float("inf")
-        alpha, beta = float("-inf"), float("inf")
-
-        for move in available_moves:
-            next_state = state.next_state(move)
-
-            if objective == Objective.MAX:
-                value = AlphaBeta.min_value(next_state, alpha, beta, MAX_DEPTH)
-                if value > best_value:
-                    alpha = max(alpha, value)
-                    best_value = value
-                    next_move = move
-            elif objective == Objective.MIN:
-                value = AlphaBeta.max_value(next_state, alpha, beta, MAX_DEPTH)
-                if value < best_value:
-                    beta = min(beta, value)
-                    best_value = value
-                    next_move = move
-
-        if MAX_DEPTH is None:
-            print(f"[AlphaBeta - Unbounded] Expanded {AlphaBeta.expanded_nodes} nodes")
+        if objective == Objective.MAX:
+            _, move = AlphaBeta.max_value(current_state, float("-inf"), float("inf"), AlphaBeta.depth )
         else:
-            print(
-                f"[AlphaBeta - Bounded={MAX_DEPTH}] Expanded {AlphaBeta.expanded_nodes} nodes"
-            )
+            _, move = AlphaBeta.min_value(current_state, float("-inf"), float("inf"), AlphaBeta.depth)
 
-        return next_move
+        print(f"Expanded states AlphaBeta: {AlphaBeta.expanded}")
+        print(f"Pruned branches: {AlphaBeta.pruned}")
 
-    @staticmethod
-    def max_value(
-        current_state: State, alpha: float, beta: float, max_depth: Union[int, None]
-    ):
-        state = current_state.copy()
-
-        AlphaBeta.expanded_nodes += 1
-
-        if state.check_victory() is not None:
-            return state.score
-
-        if max_depth == 0 and max_depth is not None:
-            return state.score
-        max_depth = max_depth - 1 if max_depth is not None else max_depth
-
-        available_moves = state.available_moves()
-        if not available_moves:
-            return state.score
-
-        max_value = float("-inf")
-        for move in available_moves:
-            next_state = state.next_state(move)
-            value = AlphaBeta.min_value(next_state, alpha, beta, max_depth)
-            max_value = max(max_value, value)
-            alpha = max(alpha, value)
-
-            if beta <= alpha:
-                AlphaBeta.pruned_nodes += 1
-                break
-
-        return max_value
+        return move
 
     @staticmethod
-    def min_value(
-        current_state: State, alpha: float, beta: float, max_depth: Union[int, None]
-    ):
-        state = current_state.copy()
+    def max_value(current_state: State, alpha, beta, depth):
+        if depth == 8:
+            return current_state.score,None
+        AlphaBeta.expanded += 1
+        if current_state.check_victory() is not None:
+            return current_state.score, None
 
-        AlphaBeta.expanded_nodes += 1
+        moves = current_state.available_moves()
+        if not moves:
+            return current_state.score, None
 
-        if state.check_victory() is not None:
-            return state.score
+        v = float("-inf")
+        best_move = moves[0]
+        for i,m in enumerate(moves):
+            child = current_state.next_state(m)
 
-        if max_depth == 0 and max_depth is not None:
-            return state.score
-        max_depth = max_depth - 1 if max_depth is not None else max_depth
+            v2, _ = AlphaBeta.min_value(child, alpha, beta, depth + 1)
+            if v2 > v:
+                v = v2
+                best_move = m
+                alpha = max(alpha, v)
+            if v >= beta:
+                AlphaBeta.pruned += len(moves) - i - 1
+                return v, best_move
 
-        available_moves = state.available_moves()
-        if not available_moves:
-            return state.score
+        return v, best_move
 
-        min_value = float("inf")
-        for move in available_moves:
-            next_state = state.next_state(move)
-            value = AlphaBeta.max_value(next_state, alpha, beta, max_depth)
-            min_value = min(min_value, value)
-            beta = min(beta, value)
+    @staticmethod
+    def min_value(current_state: State, alpha, beta, depth):
 
-            if beta <= alpha:
-                AlphaBeta.pruned_nodes += 1
-                break
+        if depth == 8:
+            return current_state.score,None
 
-        return min_value
+        AlphaBeta.expanded += 1
+        if current_state.check_victory() is not None:
+            return current_state.score, None
+
+        moves = current_state.available_moves()
+        if not moves:
+            return current_state.score, None
+
+        v = float("inf")
+        best_move = moves[0]
+        for i,m in enumerate(moves):
+            child = current_state.next_state(m)
+
+            v2, _ = AlphaBeta.max_value(child, alpha, beta, depth + 1)
+            if v2 < v:
+                v = v2
+                best_move = m
+                beta = min(beta, v)
+            if v <= alpha:
+                AlphaBeta.pruned += len(moves) - i - 1
+                return v, best_move
+        return v, best_move

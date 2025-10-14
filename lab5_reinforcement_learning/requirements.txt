@@ -1,0 +1,15 @@
+# Core scientific stack
+numpy==1.21.6
+pandas==1.3.5
+matplotlib==3.5.1
+
+# Reinforcement learning environment
+gym==0.21.0
+pyvirtualdisplay==3.0
+
+# Deep learning
+torch==1.12.1
+torchvision==0.13.1
+
+# Notebook / interactive tools
+IPython==7.34.0
